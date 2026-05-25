@@ -1,0 +1,26 @@
+# 수집 데이터 — 저작권 문제로 커밋 금지
+*.db
+*.db-shm
+*.db-wal
+chroma_db/
+
+# CSV 내보내기 산출물 (공유 시 별도 전달)
+data/
+
+# 로그 / 임시 파일
+*.log
+examples.json
+__pycache__/
+*.pyc
+*.pyo
+
+# 환경 변수 (절대 커밋 금지)
+.env
+.env.local
+.env.production
+
+# 에디터 / OS
+.DS_Store
+Thumbs.db
+.vscode/
+*.swp
