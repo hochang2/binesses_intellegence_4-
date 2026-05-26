@@ -41,6 +41,91 @@ binesses_intellegence_4-/
 
 ---
 
+## ⚡ 빠른 시작 (팀원용)
+
+> 크롤링·임베딩 없이 **기존 데이터로 바로 첨삭 CLI를 실행**하는 방법입니다.
+
+### 1단계 — 레포 클론
+
+```bash
+git clone https://github.com/hochang2/binesses_intellegence_4-.git
+cd binesses_intellegence_4-
+```
+
+### 2단계 — 패키지 설치
+
+```bash
+pip install -r requirements.txt
+```
+
+> Python 3.10 이상 권장. 가상환경 사용 시:
+> ```bash
+> python -m venv venv
+> # Windows
+> venv\Scripts\activate
+> # Mac/Linux
+> source venv/bin/activate
+> pip install -r requirements.txt
+> ```
+
+### 3단계 — API 키 설정
+
+```bash
+# .env.example 복사 후 키 입력
+copy .env.example .env        # Windows
+# cp .env.example .env        # Mac/Linux
+```
+
+`.env` 파일을 열고 OpenAI API 키 입력:
+```
+OPENAI_API_KEY=sk-proj-여기에_실제_키_입력
+```
+
+### 4단계 — 데이터 파일 배치
+
+`essays.db`와 `chroma_db/`는 git에 포함되지 않으므로 팀원에게 직접 받아야 합니다.
+
+```
+binesses_intellegence_4-/   ← 프로젝트 루트
+├── essays.db               ← 여기에 배치
+├── chroma_db/              ← 여기에 배치 (폴더째로)
+│   ├── chroma.sqlite3
+│   └── 8ca0be17-.../
+└── ...
+```
+
+| 파일 | 받는 방법 |
+|------|----------|
+| `essays.db` | 팀원에게 파일 직접 전달 |
+| `chroma_db/` (약 205MB) | zip으로 압축 후 구글 드라이브/카카오톡 전달 → 프로젝트 루트에 압축 해제 |
+
+> **chroma_db가 없는 경우**: `qna.csv`를 받아서 임베딩을 새로 생성할 수 있습니다. ([임베딩 섹션](#3-임베딩) 참고)
+
+### 5단계 — 첨삭 CLI 실행
+
+```bash
+# Windows (한글 깨짐 방지)
+python -X utf8 cli/app.py --demo
+
+# Mac/Linux
+python cli/app.py --demo
+```
+
+정상 실행 시 삼성전자 성장과정 데모 첨삭 결과가 출력됩니다.
+
+```bash
+# 직접 입력 모드
+python -X utf8 cli/app.py
+
+# 인자로 바로 실행
+python -X utf8 cli/app.py --company 삼성전자 --question "지원동기를 기술하시오." --draft "저는..."
+
+# JSON 형식 출력
+python -X utf8 cli/app.py --demo --json
+```
+
+---
+
 ## 수집 대상 기업 (12개)
 
 | 유형 | 기업 |
