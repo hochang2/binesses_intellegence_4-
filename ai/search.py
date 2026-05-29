@@ -5,8 +5,20 @@ RAG 검색 유틸리티
 - 또는 import 해서 retrieve() 함수 직접 호출
 """
 
+import logging
+import os
+import re
 import sys
 from pathlib import Path
+
+# ChromaDB 텔레메트리 / HuggingFace 불필요한 경고 억제
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+os.environ.setdefault("HF_HUB_VERBOSITY", "error")           # huggingface_hub >= 1.x
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+
+# chromadb 텔레메트리 로거 비활성화 (0.6.x 내부 버그로 stderr 에 오류 출력하는 문제)
+logging.getLogger("chromadb.telemetry").setLevel(logging.CRITICAL)
+logging.getLogger("chromadb.telemetry.product.posthog").setLevel(logging.CRITICAL)
 
 # 프로젝트 루트를 Python 경로에 추가
 _ROOT = Path(__file__).parent.parent
@@ -18,25 +30,47 @@ CHROMA_PATH = str(_ROOT / "chroma_db")
 COLLECTION  = "cover_letters"
 MODEL_NAME  = "BAAI/bge-m3"
 
+# 크롤링 아티팩트 제거 패턴 (LLM 에 넘기기 전 참고 답변 정제용)
+_NOISE_RE = re.compile(
+    r"^\(\d+자[^)\n]*(?:\([^)\n]*\))?\)\s*\n*"  # (700자), (700자 이내 (영문 1400자)) 등
+    r"|\b\d+자\s+이내[^\n]*\n*"                  # 700자 이내 ... (괄호 없는 형태)
+    r"|^Guide>\s*\n*"                            # Guide> 헤더
+    r"|^\[[^\]\n]{1,20}\]\s*\n",                 # [가이드라인] 한 줄 헤더
+    re.MULTILINE,
+)
+
 
 # ── 모델 / 컬렉션 (싱글톤) ───────────────────────────────────────────────────
 
 _model = None
 _col   = None
 
+def _clean_ref_answer(text: str) -> str:
+    """크롤링 아티팩트(글자수 표기, Guide> 등)를 제거한 깔끔한 답변 반환."""
+    text = _NOISE_RE.sub("", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip()
+
+
 def _get_model():
     global _model
     if _model is None:
+        print(f"[검색] BGE-M3 모델 로딩 중... (첫 실행 시 15~20초 소요)", flush=True)
         from sentence_transformers import SentenceTransformer
         _model = SentenceTransformer(MODEL_NAME)
+        print("[검색] 모델 로딩 완료", flush=True)
     return _model
 
 def _get_col():
     global _col
     if _col is None:
         import chromadb
-        client = chromadb.PersistentClient(path=CHROMA_PATH)
-        _col   = client.get_collection(COLLECTION)
+        from chromadb.config import Settings
+        client = chromadb.PersistentClient(
+            path=CHROMA_PATH,
+            settings=Settings(anonymized_telemetry=False),
+        )
+        _col = client.get_collection(COLLECTION)
     return _col
 
 
@@ -109,10 +143,10 @@ def retrieve(
         # ChromaDB cosine distance = 1 - cosine_similarity
         similarity = round(1 - dist, 4)
 
-        # documents 에 저장된 텍스트에서 Q/A 분리
+        # documents 에 저장된 텍스트에서 Q/A 분리 후 노이즈 제거
         parts    = doc.split("\n", 1)
         question = parts[0] if len(parts) == 2 else ""
-        answer   = parts[1] if len(parts) == 2 else parts[0]
+        answer   = _clean_ref_answer(parts[1] if len(parts) == 2 else parts[0])
 
         results.append({
             "company":       meta.get("company", ""),

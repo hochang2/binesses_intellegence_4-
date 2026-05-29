@@ -7,6 +7,7 @@
 - 테스트: python embed_pipeline.py --test   (100건만)
 """
 
+import os
 import sys
 import io
 import time
@@ -15,6 +16,10 @@ import logging
 import argparse
 from datetime import datetime
 from pathlib import Path
+
+# ChromaDB 텔레메트리 / HF 경고 억제
+os.environ.setdefault("ANONYMIZED_TELEMETRY", "False")
+os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN_WARNING", "1")
 
 import numpy as np
 from tqdm import tqdm

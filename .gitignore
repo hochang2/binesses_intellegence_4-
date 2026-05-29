@@ -19,6 +19,19 @@ __pycache__/
 .env.local
 .env.production
 
+# 가상환경
+venv/
+venv_chroma/
+.venv/
+
+# 임시 파일
+chroma_test/
+*.zip
+script.txt
+
+# Claude Code 설정
+.claude/
+
 # 에디터 / OS
 .DS_Store
 Thumbs.db
